@@ -3,15 +3,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import least_squares
-
-
-## CONSTANTS ##
-pV = pA = pS = ps = 1e-12
-nV = nA = nS = ns = 1e-9
-uV = uA = uS = us = 1e-6
-mV = mA = mS = ms = 1e-3
-Mohm = 1e6
-
+# Importamos las constantes de unidades
+from .units import pV, pA, pS, Mohm
+from .units import nV, nA, nS, ns
+from .units import uV, uA, uS, us
+from .units import mV, mA, mS, ms
 
 class Adex_model(object):
     DEFAULT_PARS = {
@@ -31,6 +27,18 @@ class Adex_model(object):
     VALID_KEYS = DEFAULT_PARS.keys()
 
     def __init__(self, **kwargs):
+        self.tau_m = None
+        self.R = None
+        self.V_rest = None
+        self.V_reset = None
+        self.V_rh = None
+        self.delta_T = None
+        self.a = None
+        self.tau_w = None
+        self.b = None
+        self.V_init = None
+        self.w_init = None
+        self.V_thres = None
         # Parameters can be set either by passing them as kwargs...
         for name, value in kwargs.items():
             if name not in Adex_model.VALID_KEYS:
@@ -38,7 +46,7 @@ class Adex_model(object):
             setattr(self, name, value)
         # ... or set by default
         for def_name, def_val in Adex_model.DEFAULT_PARS.items():
-            if not hasattr(self, def_name):
+            if getattr(self, def_name) is None:
                 setattr(self, def_name, def_val)
 
     
@@ -53,18 +61,12 @@ class Adex_model(object):
         Returns:
             np.ndarray: np.array([du/dy, dv/dt])
         """
-        tau_m = self.tau_m
-        tau_w = self.tau_w
-        R = self.R
-        V_rest = self.V_rest
-        V_rh = self.V_rh
-        delta_T = self.delta_T
-        a = self.a
+        s = self # alias for neater code
 
-        du = -(u - V_rest) + delta_T*np.exp((u - V_rh)/delta_T) - R*w + R*I_val
-        dw = a*(u - V_rest) - w
+        du = -(u - s.V_rest) + s.delta_T*np.exp((u - s.V_rh)/s.delta_T) - s.R*w + s.R*I_val
+        dw = s.a*(u - s.V_rest) - w
 
-        return np.array([du/tau_m, dw/tau_w])
+        return np.array([du/s.tau_m, dw/s.tau_w])
 
 
     def simulate_trajectory(self, t: np.ndarray, 
@@ -72,7 +74,7 @@ class Adex_model(object):
                             plot: bool=False,
                             I_units: float=pA,
                             t_units: float=ms,
-                            v_units: float=mV):
+                            v_units: float=mV) -> Tuple[np.ndarray, List[int]]:
         """
         Resuelve numericamente un problema de valor inicial para el modelo LIF
 
@@ -167,16 +169,17 @@ class Adex_model(object):
         res_opt = least_squares(residuals, init_pars, bounds=(lb, up))
 
 
-def test():
+def test_adex():
     adex = Adex_model()
-    t_arr = np.linspace(0, 0.3, 1000)
-    i_0 = 65e-12
-    i_func = np.vectorize(lambda t: i_0*(t>0.01)*(t<0.2))
+    t_arr = np.linspace(0, 300*ms, 1000)
+    i_0 = 65*pA
+    i_func = np.vectorize(lambda t: i_0*(t>50*ms))
     I_arr = i_func(t_arr)
 
     obj_spikes = np.array([189, 200, 214, 235, 286, 409, 532, 655, 778, 901])
     adex.fit_spikes(t_arr, obj_spikes, I_arr)
     adex.simulate_trajectory(t_arr, I_arr, plot=True)
 
+
 if __name__ == '__main__':
-    test()
+    test_adex()
