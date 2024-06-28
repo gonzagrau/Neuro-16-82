@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import least_squares
+from .utils import firing_rate
 # Importamos las constantes de unidades
-from .units import pV, pA, pS, Mohm
-from .units import nV, nA, nS, ns
-from .units import uV, uA, uS, us
-from .units import mV, mA, mS, ms
+from .utils import pV, pA, pS, Mohm
+from .utils import nV, nA, nS, ns
+from .utils import uV, uA, uS, us
+from .utils import mV, mA, mS, ms
 
 class LIF_model(object):
     DEFAULT_PARS = {
@@ -106,14 +107,17 @@ class LIF_model(object):
 
     def fit_spikes(self, t: np.ndarray,
                    obj_spikes: List[int] | np.ndarray,
-                   I_input: np.ndarray) -> None:
+                   I_input: np.ndarray,
+                   n_per_bin: int=10) -> None:
         """
         Tweaks some model parameters to fit some objective spike times
         Args:
             t (np.ndarray): time array
             obj_spikes (List[int] | np.ndarray): list of indeces where spikes happen
             I_input (np.ndarray): input current, same shape as t
+            n_per_bin: binsize for firing rate computing
         """
+        obj_rates = firing_rate(t, obj_spikes, n_per_bin)
         tweak_keys = ['tau_m', 'g_L', 'V_th']
         tweak_units = [ms, nS, mV]
         init_pars = []
@@ -126,16 +130,9 @@ class LIF_model(object):
                 self.__setattr__(key, par * unit)
 
             _, sim_spikes = self.simulate_trajectory(t, I_input)
+            sim_rates = firing_rate(t, sim_spikes, n_per_bin)
 
-            len_obj = len(obj_spikes)
-            len_sim = len(sim_spikes)
-            null_spikes_arr = np.zeros(max(len_obj, len_sim))
-            obj_spikes_lmax = null_spikes_arr.copy()
-            sim_spikes_lmax = null_spikes_arr.copy()
-            obj_spikes_lmax[:len_obj] = obj_spikes
-            sim_spikes_lmax[:len_sim] = sim_spikes
-
-            return obj_spikes_lmax - sim_spikes_lmax
+            return (obj_rates - sim_rates) + (len(obj_spikes) - len(sim_spikes))**2
 
         #    ['tau_m', 'g_L', 'V_th']
         lb = [0.1,    0.1,  -65]

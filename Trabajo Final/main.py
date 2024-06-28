@@ -5,6 +5,7 @@ from neuron_models.adex import test_adex
 def main():
     test_lif()
 
-
 if __name__ == '__main__':
     main()
+
+    
