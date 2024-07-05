@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import differential_evolution, least_squares
-from .utils import firing_rate
+from .utils import firing_rate, plot_voltage
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
@@ -75,7 +75,6 @@ class Adex_model(object):
     def simulate_trajectory(self, t: np.ndarray, 
                             I_input: np.ndarray, 
                             plot: bool=False,
-                            I_units: float=pA,
                             t_units: float=ms,
                             v_units: float=mV) -> Tuple[np.ndarray, List[int]]:
         """
@@ -118,16 +117,8 @@ class Adex_model(object):
             X[:, i] = np.array([u_next, w_next])
 
         if plot:
-            t_p = t/t_units
-            V_p = X[0, :]/v_units
-
-            fig, ax = plt.subplots(figsize=(10, 5), sharex=True)
-            
-            ax.plot(t_p, V_p, 'k')
-            ax.set_xlabel('$t$')
-            ax.set_ylabel('$V$')
-
-            plt.show()
+            V = X[0, :]
+            plot_voltage(t, V, t_units, v_units)
 
         return X, spike_times
         

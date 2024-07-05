@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import least_squares
-from .utils import firing_rate
+from .utils import firing_rate, plot_voltage
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
 from .utils import uV, uA, uS, us
 from .utils import mV, mA, mS, ms
+
 
 class LIF_model(object):
     DEFAULT_PARS = {
@@ -57,7 +58,6 @@ class LIF_model(object):
     def simulate_trajectory(self, t: np.ndarray,
                             I_input: np.ndarray,
                             plot: bool = False,
-                            I_units: float = pA,
                             t_units: float = ms,
                             v_units: float = mV) -> Tuple[np.ndarray, List[int]]:
         """
@@ -96,11 +96,7 @@ class LIF_model(object):
                 V[i] = V_next
 
         if plot:
-            fig, ax = plt.subplots()
-            ax.plot(t/t_units, V/v_units, 'k-', linewidth=0.5)
-            ax.set_xlabel('t [ms]')
-            ax.set_ylabel('V [mV]')
-            plt.show()
+            plot_voltage(t, V, t_units, v_units)
 
         return V, spike_times
 
