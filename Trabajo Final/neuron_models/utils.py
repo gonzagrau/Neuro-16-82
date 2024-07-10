@@ -30,7 +30,7 @@ def firing_rate(t: np.linspace, spike_times: np.ndarray | List[int], n_per_bin: 
         if bin_t_count == 0:
            # skip first time sample
            if i == 0:
-            continue
+               continue
            rates[bin_number - 1] =  sp_count
            sp_count = 0
 
