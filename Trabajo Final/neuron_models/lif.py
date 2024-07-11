@@ -129,16 +129,18 @@ class LIF_model(object):
         for key, par, unit in zip(keys, pars, units):
             self.__setattr__(key, par * unit)
 
-    def fit_voltage(self, t: np.ndarray,
-                    obj_volt: np.ndarray,
+    def fit_spikes_GA(self, t: np.ndarray,
+                    obj_spikes: np.ndarray,
                     I_input: np.ndarray,
+                    n_per_bin: int,
                     N_iter: int=1000,
                     popu_size: int=100,
                     mut_rate: float=0.01) -> None:
         """
         Tweaks the object's parameters to fit a voltage curve using genetic algorithms
         :param t: time array
-        :param obj_volt: objective voltage readings
+        :param obj_spikes: neuron spike readings
+        :param n_per_bin: bins for the firing rate calculation
         :param I_input: input current
         :param popu_size: population size for GA
         :param N_iter: maximum number of algorithm iterations
@@ -146,18 +148,21 @@ class LIF_model(object):
         :return: None, but the internal parameters are tweaked to the best fitting
 
         """
+        obj_rates = firing_rate(t, obj_spikes, n_per_bin)
         tweak_keys = ['tau_m', 'g_L', 'V_th']
         tweak_units = [ms, nS, mV]
         def_pars = self.get_init_pars_2_fit(tweak_keys, tweak_units)
 
         def fitness_function(pars):
             self.update_params(tweak_keys, pars, tweak_units)
-            sim_volt, _ = self.simulate_trajectory(t, I_input)
-            error = np.mean((sim_volt - obj_volt)**2)
-            return 1 / (1 + error)
+            _, sim_spikes = self.simulate_trajectory(t, I_input)
+            sim_rates = firing_rate(t, sim_spikes, n_per_bin)
+            rate_error = np.sum((obj_rates - sim_rates)**2)
+            # timing_error = sum([abs(t1 - t2) for t1, t2 in zip(sim_spikes, obj_spikes)])
+            return 1 / (1 + rate_error)
 
-        def initialize_population(pop_size, param_size):
-            return np.random.rand(pop_size, param_size)*10.
+        def initialize_population(pop_size):
+            return np.array([def_pars + np.random.normal() for _ in range(pop_size)])
 
         def select_parents(population, fitnesses, num_parents):
             return population[np.argsort(fitnesses)[-num_parents:]]
@@ -181,7 +186,7 @@ class LIF_model(object):
 
         def genetic_algorithm(pop_size, init_pars, num_generations, mutation_rate):
             param_size = init_pars.shape[0]
-            population = initialize_population(pop_size, param_size)
+            population = initialize_population(pop_size)
             best_solution = None
             best_fitness = -np.inf
 
