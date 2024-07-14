@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import least_squares
 from scipy.signal import find_peaks
+from .base_model import NeuronModel
 from .utils import firing_rate, ruku4
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
@@ -11,7 +12,7 @@ from .utils import uV, uA, uS, us, uF
 from .utils import mV, mA, mS, ms
 
 
-class HodgkinHuxley(object):
+class HodgkinHuxley(NeuronModel):
     DEFAULT_PARS = {
             'g_Na' : 120.0*mS,
             'g_K' : 36.0*mS,
@@ -39,16 +40,8 @@ class HodgkinHuxley(object):
         self.n_init = None
         self.m_init = None
         self.h_init = None
-        # Parameters can be set either by passing them as kwargs...
-        for name, value in kwargs.items():
-            if name not in HodgkinHuxley.VALID_KEYS:
-                raise ValueError(f"{name} is not a valid attribute for this class")
-            setattr(self, name, value)
-        # ... or set by default
-        for def_name, def_val in HodgkinHuxley.DEFAULT_PARS.items():
-            if getattr(self, def_name) is None:
-                setattr(self, def_name, def_val)
 
+        super().__init__(HodgkinHuxley.DEFAULT_PARS, HodgkinHuxley.VALID_KEYS, **kwargs)
 
     @staticmethod
     def alpha_n(v: float):

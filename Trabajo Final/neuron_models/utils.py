@@ -23,7 +23,7 @@ def firing_rate(t: np.linspace, spike_times: np.ndarray | List[int], n_per_bin: 
     t_len = len(t)
     bin_edges = np.arange(0, t_len + n_per_bin, n_per_bin)
     spike_bins = np.digitize(spike_times, bin_edges, right=True) - 1
-    rates = np.bincount(spike_bins, minlength=t_len//n_per_bin)
+    rates = np.bincount(spike_bins, minlength=t_len//n_per_bin)[:t_len//n_per_bin]
 
     return rates
 

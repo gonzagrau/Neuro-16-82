@@ -1,28 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from typing import Callable, Tuple, List, Dict # para hacer type hinting
-from scipy.optimize import differential_evolution, least_squares
+from typing import Callable, Tuple, List, Dict, Self # para hacer type hinting
+# Importaciones de la misma libreria
+from .base_model import NeuronModel
 from .utils import firing_rate, plot_voltage
+from .genetic_algo import GeneticAlgorithm
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
 from .utils import uV, uA, uS, us
 from .utils import mV, mA, mS, ms
 
-class Adex_model(object):
+class Adex_model(NeuronModel):
     DEFAULT_PARS = {
-        'tau_m': 5*ms,         
-        'R': 500*Mohm,        
-        'V_rest': -70*mV,    
-        'V_reset': -51*mV,   
-        'V_rh': -50.0*mV,     
-        'delta_T': 2.0*mV,     
-        'a': 0.5*nS,           
+        'tau_m': 5*ms,
+        'R': 500*Mohm,
+        'V_rest': -70*mV,
+        'V_reset': -51*mV,
+        'V_rh': -50.0*mV,
+        'delta_T': 2.0*mV,
+        'a': 0.5*nS,
         'tau_w': 100*mS,
-        'b': 7.0*pA,      
+        'b': 7.0*pA,
         'V_init': -70.0*mV,
-        'w_init': 0*mV,          
+        'w_init': 0*mV,
         'V_thres': -35*mV,
         'V_postreset': 0 * mV
     }
@@ -43,16 +45,9 @@ class Adex_model(object):
         self.V_thres = None
         self.V_postreset = None
         # Parameters can be set either by passing them as kwargs...
-        for name, value in kwargs.items():
-            if name not in Adex_model.VALID_KEYS:
-                raise ValueError(f"{name} is not a valid attribute for this class")
-            setattr(self, name, value)
-        # ... or set by default
-        for def_name, def_val in Adex_model.DEFAULT_PARS.items():
-            if getattr(self, def_name) is None:
-                setattr(self, def_name, def_val)
+        super().__init__(Adex_model.DEFAULT_PARS, Adex_model.VALID_KEYS, **kwargs)
 
-    
+
     def derivative(self, I_val: float, u: float, w: float) -> np.ndarray:
         """
         Computes instantaneous derivative
@@ -71,8 +66,9 @@ class Adex_model(object):
 
         return np.array([du/s.tau_m, dw/s.tau_w])
 
-    def simulate_trajectory(self, t: np.ndarray, 
-                            I_input: np.ndarray, 
+
+    def simulate_trajectory(self, t: np.ndarray,
+                            I_input: np.ndarray,
                             plot: bool=False,
                             t_units: float=ms,
                             v_units: float=mV) -> Tuple[np.ndarray, np.ndarray]:
@@ -120,45 +116,31 @@ class Adex_model(object):
             plot_voltage(t, V, t_units, v_units)
 
         return X, np.array(spike_times)
-        
 
-    def fit_params(self, t: np.ndarray,
-                   I_input: np.ndarray,
-                   obj_spike_times: List[int] | np.ndarray,
-                   n_per_bin: int = 50) -> None:
+
+    def fit_spikes(self, t: np.ndarray,
+                  obj_spikes: np.ndarray,
+                  I_input: np.ndarray,
+                  n_per_bin: int=10,
+                  tweak_keys: List['str'] | None=None,
+                  tweak_units: List[int | float] | None=None,
+                  N_iter: int=1000,
+                  max_rep: int=10,
+                  pop_size: int=100,
+                  mut_rate: float=0.01) -> None:
         """
-        Tweaks some model parameters to fit some objective spike times
-        :param t: tine array
-        :param I_input: input current, same shape as T
-        :param obj_spike_times: objective spike times
-        :param n_per_bin: optional, indicates the binsize for the firing rate calculation
+        See docstring for superclass
         """
-        obj_rates = firing_rate(t, obj_spike_times, n_per_bin)
-        tweak_keys = ['tau_m', 'a', 'tau_w', 'b', 'V_reset', 'delta_T']
-        tweak_units = [ms,     ns,   ms,      pA,  mV,       mV]
-        init_pars = []
-        for key, unit in zip(tweak_keys, tweak_units):
-            init_pars.append(self.__getattribute__(key)/unit)
-        init_pars = np.array(init_pars)
+        if tweak_units is None:
+            if tweak_keys is None:
+                tweak_keys = ['tau_m', 'a', 'tau_w', 'b', 'V_reset', 'delta_T']
+                tweak_units = [ms, ns, ms, pA, mV, mV]
+            else:
+                tweak_units = [1 for _ in range(len(tweak_keys))]
 
-        def residuals(params_vector) -> np.ndarray:
-            # tweak parameters
-            for key, param, unit in zip(tweak_keys, params_vector, tweak_units):
-                self.__setattr__(key, param*unit)
-            # simulate and find rates
-            _, sim_spikes = self.simulate_trajectory(t, I_input)
-            sim_rates = firing_rate(t, sim_spikes, n_per_bin)
+        super().fit_spikes(t, obj_spikes, I_input, n_per_bin, tweak_keys,
+                           tweak_units, N_iter, max_rep, pop_size, mut_rate)
 
-            return obj_rates - sim_rates
-        
-        #    [tau_m', 'a', 'tau_w', 'b', 'V_reset']
-        lb = [0.1, -100, 0.1, 0.01, -65, 0.01]
-        ub = [1000, 100, 1000, 1000, 100, 100]
-        bounds = [(low, upp) for low, upp in zip(lb, ub)]
-
-        least_squares(residuals, x0=init_pars, bounds=(lb, ub))
-def papafrita():
-    return 0
 
 def test_adex():
     # 1. Runs simulations with a series of known parameters
@@ -181,16 +163,15 @@ def test_adex():
                           'V_reset' : -46*mV}
     patterns = [pars_adex_bursting, pars_adex_init_burst]
     X_list = []
+    spikes_list = []
     for kwargs in patterns:
         adex = Adex_model(**kwargs)
         X, spike_times = adex.simulate_trajectory(t_arr, I_arr, plot=True)
         X_list.append(X)
+        spikes_list.append(spike_times)
 
     # 2. Tries to fit the parameters to match
-    V_burst = X_list[0][0, :]
     base_adex = Adex_model()
-    base_adex.fit_params(t_arr, I_arr, V_burst, n_per_bin=len(t_arr)//30)
+    obj_spikes = spikes_list[0]
+    base_adex.fit_spikes(t_arr, obj_spikes, I_arr, n_per_bin=len(t_arr)//30)
     base_adex.simulate_trajectory(t_arr, I_arr, plot=True)
-
-if __name__ == '__main__':
-    test_adex()

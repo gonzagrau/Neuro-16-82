@@ -1,5 +1,6 @@
 import numpy as np
-from typing import Tuple, List, Callable
+from typing import Tuple, Callable
+
 
 class GeneticAlgorithm(object):
     def __init__(self, pop_size: int,
@@ -29,8 +30,10 @@ class GeneticAlgorithm(object):
     def initialize_population(self, init_pars: np.ndarray) -> np.ndarray:
         return np.array([init_pars + np.random.normal() for _ in range(self.pop_size)])
 
+
     def select_parents(self, fitnesses, num_parents):
         return self.population[np.argsort(fitnesses)[-num_parents:]]
+
 
     def crossover(self, parents, offspring_size: Tuple[int, int]):
         offspring = np.empty(offspring_size)
@@ -41,6 +44,7 @@ class GeneticAlgorithm(object):
             offspring[k, :crossover_point] = parents[parent1_idx, :crossover_point]
             offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
         return offspring
+
 
     def mutate(self, offspring):
         for idx in range(offspring.shape[0]):
