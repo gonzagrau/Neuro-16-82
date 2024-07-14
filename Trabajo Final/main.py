@@ -1,5 +1,5 @@
 from neuron_models.lif import test_lif
-from neuron_models.adex import test_adex
+from neuron_models.adex import test_adex,papafrita
 from neuron_models.hodgkin_huxley import test_hyh
 from neuron_models.utils import firing_rate,fit_spikes_GA
 from time import time
@@ -18,7 +18,8 @@ def main():
     end_1 = time()
     print(rates)
     print(f"time elaps for non vectorized function: {end_1 - start_1}")
-
+    papafrita()
+    
     start_2 = time()
     #rates = vectorized_firing_rate(t, spike_times, n_per_bin)
     end_2 = time()

@@ -157,7 +157,8 @@ class Adex_model(object):
         bounds = [(low, upp) for low, upp in zip(lb, ub)]
 
         least_squares(residuals, x0=init_pars, bounds=(lb, ub))
-
+def papafrita():
+    return 0
 
 def test_adex():
     # 1. Runs simulations with a series of known parameters
