@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import differential_evolution, least_squares
-from .utils import firing_rate, plot_voltage
+from .utils import firing_rate, plot_voltage,fit_spikes_GA
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
@@ -70,7 +70,6 @@ class Adex_model(object):
         dw = s.a*(u - s.V_rest) - w
 
         return np.array([du/s.tau_m, dw/s.tau_w])
-
 
     def simulate_trajectory(self, t: np.ndarray, 
                             I_input: np.ndarray, 

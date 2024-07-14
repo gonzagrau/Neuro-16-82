@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import least_squares, differential_evolution
-from .utils import firing_rate, plot_voltage
+from .utils import firing_rate, plot_voltage,fit_spikes_GA
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
@@ -149,8 +149,8 @@ class LIF_model(object):
 
         """
         obj_rates = firing_rate(t, obj_spikes, n_per_bin)
-        tweak_keys = ['tau_m', 'g_L', 'V_th']
-        tweak_units = [ms, nS, mV]
+        tweak_keys = ['tau_m', 'g_L']
+        tweak_units = [ms, nS]
         def_pars = self.get_init_pars_2_fit(tweak_keys, tweak_units)
 
         def fitness_function(pars):
@@ -226,8 +226,8 @@ class LIF_model(object):
         """
         n_iter = 0
         obj_rates = firing_rate(t, obj_spikes, n_per_bin)
-        tweak_keys = ['tau_m', 'g_L', 'V_th']
-        tweak_units = [ms, nS, mV]
+        tweak_keys = ['tau_m', 'g_L']
+        tweak_units = [ms, nS]
         init_pars = []
         for key, unit in zip(tweak_keys, tweak_units):
             init_pars.append(self.__getattribute__(key) / unit)
@@ -245,8 +245,8 @@ class LIF_model(object):
             return  rate_error #+ timing_error
 
         #    ['tau_m', 'g_L', 'V_th']
-        lb = [0.1,    0.1,  -65]
-        up = [np.inf, np.inf, 0]
+        lb = [0.1,    0.1]
+        up = [np.inf, np.inf]
 
         res_opt = least_squares(residuals, init_pars, bounds=(lb, up))
         print(f"error: {res_opt.fun}")
