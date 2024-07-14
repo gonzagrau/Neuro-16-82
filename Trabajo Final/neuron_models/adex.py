@@ -75,7 +75,7 @@ class Adex_model(object):
                             I_input: np.ndarray, 
                             plot: bool=False,
                             t_units: float=ms,
-                            v_units: float=mV) -> Tuple[np.ndarray, List[int]]:
+                            v_units: float=mV) -> Tuple[np.ndarray, np.ndarray]:
         """
         Resuelve numericamente un problema de valor inicial para el modelo LIF
 
@@ -119,7 +119,7 @@ class Adex_model(object):
             V = X[0, :]
             plot_voltage(t, V, t_units, v_units)
 
-        return X, spike_times
+        return X, np.array(spike_times)
         
 
     def fit_params(self, t: np.ndarray,

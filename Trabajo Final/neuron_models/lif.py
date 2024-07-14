@@ -1,7 +1,9 @@
+import typing
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from typing import Callable, Tuple, List, Dict # para hacer type hinting
+from typing import Callable, Tuple, List, Dict, Self # para hacer type hinting
 from scipy.optimize import least_squares, differential_evolution
 from .utils import firing_rate, plot_voltage
 from .genetic_algo import GeneticAlgorithm
@@ -59,7 +61,7 @@ class LIF_model(object):
                             I_input: np.ndarray,
                             plot: bool = False,
                             t_units: float = ms,
-                            v_units: float = mV) -> Tuple[np.ndarray, List[int]]:
+                            v_units: float = mV) -> Tuple[np.ndarray, np.ndarray]:
         """
         Solves IVP to find the trajectory v(t)
         :param t: time samples
@@ -98,7 +100,7 @@ class LIF_model(object):
         if plot:
             plot_voltage(t, V, t_units, v_units)
 
-        return V, spike_times
+        return V, np.array(spike_times)
 
 
     def get_init_pars_2_fit(self, keys: List[str], units: List[int]) -> np.ndarray:
@@ -137,6 +139,7 @@ class LIF_model(object):
                       tweak_keys: List['str'] | None=None,
                       tweak_units: List[int | float] | None=None,
                       N_iter: int=1000,
+                      max_rep: int=10,
                       pop_size: int=100,
                       mut_rate: float=0.01) -> None:
         """
@@ -149,6 +152,7 @@ class LIF_model(object):
         :param tweak_units: units for said parameters
         :param pop_size: population size for GA
         :param N_iter: maximum number of algorithm iterations
+        :param max_rep: maximum amount of succesive unevolutive generations
         :param mut_rate: float in [0, 1) for mutation rate in GA
         :return: None, but the internal parameters are tweaked to the best fitting
         """
@@ -162,16 +166,16 @@ class LIF_model(object):
         obj_rates = firing_rate(t, obj_spikes, n_per_bin)
         init_pars = self.get_init_pars_2_fit(tweak_keys, tweak_units)
 
-        def fitness_function(pars):
-            self.update_params(tweak_keys, pars, tweak_units)
-            _, sim_spikes = self.simulate_trajectory(t, I_input)
+        def fitness_function(pars: np.ndarray, lif_obj: Self, keys, units):
+            lif_obj.update_params(keys, pars, units)
+            _, sim_spikes = lif_obj.simulate_trajectory(t, I_input)
             sim_rates = firing_rate(t, sim_spikes, n_per_bin)
-            rate_error = np.mean((obj_rates - sim_rates)**2)
+            rate_error = np.sum((obj_rates - sim_rates)**2)
             # timing_error = sum([abs(t1 - t2) for t1, t2 in zip(sim_spikes, obj_spikes)])
             return 1 / (1 + rate_error)
 
-        algo_obj = GeneticAlgorithm(pop_size, N_iter, mut_rate, fitness_function, init_pars)
-        best_solution = algo_obj.genetic_algorithm()
+        algo_obj = GeneticAlgorithm(pop_size, N_iter, max_rep, mut_rate, fitness_function, init_pars)
+        best_solution = algo_obj.genetic_algorithm(self, tweak_keys, tweak_units)
 
         self.update_params(tweak_keys, best_solution, tweak_units)
 
