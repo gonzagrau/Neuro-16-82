@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.optimize import differential_evolution, least_squares
-from .utils import firing_rate, plot_voltage,fit_spikes_GA
+from .utils import firing_rate, plot_voltage
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
