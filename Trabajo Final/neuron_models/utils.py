@@ -7,7 +7,9 @@ pV = pA = pS = ps = 1e-12
 nV = nA = nS = ns = 1e-9
 uV = uA = uS = us = uF = 1e-6
 mV = mA = mS = ms = 1e-3
+cm = 0.01
 Mohm = 1e6
+
 
 ## FUNCTIONS ##
 

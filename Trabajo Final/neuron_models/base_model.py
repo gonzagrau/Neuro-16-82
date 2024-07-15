@@ -60,7 +60,8 @@ class NeuronModel(object):
                    N_iter: int=1000,
                    max_rep: int=10,
                    pop_size: int=100,
-                   mut_rate: float=0.01) -> None:
+                   mut_rate: float=0.01,
+                   mut_scale: float=1.) -> None:
         """
         Tweaks the object's parameters to fit a voltage curve using genetic algorithms
         :param t: time array
@@ -73,6 +74,7 @@ class NeuronModel(object):
         :param N_iter: maximum number of algorithm iterations
         :param max_rep: maximum amount of succesive unevolutive generations
         :param mut_rate: float in [0, 1) for mutation rate in GA
+        :param mut_scale: standard deviation of normal mutation
         :return: None, but the internal parameters are tweaked to the best fitting
         """
 
@@ -87,7 +89,7 @@ class NeuronModel(object):
             # timing_error = sum([abs(t1 - t2) for t1, t2 in zip(sim_spikes, obj_spikes)])
             return 1 / (1 + rate_error)
 
-        algo_obj = GeneticAlgorithm(pop_size, N_iter, max_rep, mut_rate, fitness_function, init_pars)
+        algo_obj = GeneticAlgorithm(pop_size, N_iter, max_rep, mut_rate, mut_scale, fitness_function, init_pars)
         best_solution = algo_obj.genetic_algorithm(self, tweak_keys, tweak_units)
 
         self.update_params(tweak_keys, best_solution, tweak_units)

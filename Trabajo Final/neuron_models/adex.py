@@ -1,16 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from typing import Callable, Tuple, List, Dict, Self # para hacer type hinting
+from typing import Tuple, List # para hacer type hinting
 # Importaciones de la misma libreria
 from .base_model import NeuronModel
-from .utils import firing_rate, plot_voltage
-from .genetic_algo import GeneticAlgorithm
+from .utils import plot_voltage
 # Importamos las constantes de unidades
-from .utils import pV, pA, pS, Mohm
-from .utils import nV, nA, nS, ns
-from .utils import uV, uA, uS, us
-from .utils import mV, mA, mS, ms
+from .utils import  pA, Mohm
+from .utils import nS, ns
+from .utils import mV, mS, ms
+
 
 class Adex_model(NeuronModel):
     DEFAULT_PARS = {
@@ -127,7 +124,8 @@ class Adex_model(NeuronModel):
                   N_iter: int=1000,
                   max_rep: int=10,
                   pop_size: int=100,
-                  mut_rate: float=0.01) -> None:
+                  mut_rate: float=0.01,
+                  mut_scale: float=1.) -> None:
         """
         See docstring for superclass
         """

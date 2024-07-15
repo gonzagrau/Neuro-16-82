@@ -7,6 +7,7 @@ class GeneticAlgorithm(object):
                  N_iter: int,
                  max_rep: int,
                  mut_rate: float,
+                 mut_scale: float,
                  fitness_function: Callable,
                  init_pars: np.ndarray):
         """
@@ -23,6 +24,7 @@ class GeneticAlgorithm(object):
         self.N_iter = N_iter
         self.max_rep = max_rep
         self.mut_rate = mut_rate
+        self.mut_scale = mut_scale
         self.fitness_function = fitness_function
         self.population = self.initialize_population(init_pars)
 
@@ -47,13 +49,16 @@ class GeneticAlgorithm(object):
 
     def mutate(self, offspring):
         mutations = np.random.rand(*offspring.shape) < self.mut_rate
-        mutation_values = np.random.normal(size=offspring.shape)
+        mutation_values = np.random.normal(size=offspring.shape, scale=self.mut_scale)
         offspring = np.where(mutations, offspring + mutation_values, offspring)
         return offspring
+
+
     def evaluate_fitness(self, population, *args, **kwargs):
         with ThreadPoolExecutor() as executor:
             fitnesses = list(executor.map(lambda params: self.fitness_function(params, *args, **kwargs), population))
         return np.array(fitnesses)
+
 
     def genetic_algorithm(self, *args, **kwargs) -> np.ndarray:
         """
@@ -88,7 +93,7 @@ class GeneticAlgorithm(object):
 
             # Strings para mostrar al usuario
             par_str = ', '.join([f"{par:3f}" for par in best_solution])
-            print(f"Generation {generation}: Best Fitness = {best_fitness}", end=' ')
+            print(f"Generation {generation}: Best Fitness = {best_fitness:.4e}", end=' ')
             print(f"Params: [{par_str}]")
 
             rep_count += 1
