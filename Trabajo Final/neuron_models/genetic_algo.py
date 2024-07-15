@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple, Callable
-
+from concurrent.futures import ThreadPoolExecutor
 
 class GeneticAlgorithm(object):
     def __init__(self, pop_size: int,
@@ -28,7 +28,7 @@ class GeneticAlgorithm(object):
 
 
     def initialize_population(self, init_pars: np.ndarray) -> np.ndarray:
-        return np.array([init_pars + np.random.normal() for _ in range(self.pop_size)])
+        return init_pars + np.random.normal(size=(self.pop_size, init_pars.size))
 
 
     def select_parents(self, fitnesses, num_parents):
@@ -36,23 +36,24 @@ class GeneticAlgorithm(object):
 
 
     def crossover(self, parents, offspring_size: Tuple[int, int]):
-        offspring = np.empty(offspring_size)
         crossover_point = offspring_size[1] // 2
-        for k in range(offspring_size[0]):
-            parent1_idx = k % parents.shape[0]
-            parent2_idx = (k + 1) % parents.shape[0]
-            offspring[k, :crossover_point] = parents[parent1_idx, :crossover_point]
-            offspring[k, crossover_point:] = parents[parent2_idx, crossover_point:]
+        parent1_idx = np.arange(offspring_size[0]) % parents.shape[0]
+        parent2_idx = (np.arange(offspring_size[0]) + 1) % parents.shape[0]
+        offspring = np.empty(offspring_size)
+        offspring[:, :crossover_point] = parents[parent1_idx, :crossover_point]
+        offspring[:, crossover_point:] = parents[parent2_idx, crossover_point:]
         return offspring
 
 
     def mutate(self, offspring):
-        for idx in range(offspring.shape[0]):
-            if np.random.rand() < self.mut_rate:
-                mutation_idx = np.random.randint(0, offspring.shape[1])
-                offspring[idx, mutation_idx] += np.random.normal()
+        mutations = np.random.rand(*offspring.shape) < self.mut_rate
+        mutation_values = np.random.normal(size=offspring.shape)
+        offspring = np.where(mutations, offspring + mutation_values, offspring)
         return offspring
-
+    def evaluate_fitness(self, population, *args, **kwargs):
+        with ThreadPoolExecutor() as executor:
+            fitnesses = list(executor.map(lambda params: self.fitness_function(params, *args, **kwargs), population))
+        return np.array(fitnesses)
 
     def genetic_algorithm(self, *args, **kwargs) -> np.ndarray:
         """
@@ -70,10 +71,11 @@ class GeneticAlgorithm(object):
             # Hallamos la fitness de cada miembro de la poblacion
             fitnesses = np.array([self.fitness_function(params, *args, **kwargs) for params in self.population])
             # Identificamos al mejor, y actualizamos de ser el necesario
-            if np.max(fitnesses) > best_fitness:
+            max_fitness_idx = np.argmax(fitnesses)
+            if fitnesses[max_fitness_idx] > best_fitness:
                 rep_count = 0
-                best_fitness = np.max(fitnesses)
-                best_solution = self.population[np.argmax(fitnesses)].copy()
+                best_fitness = fitnesses[max_fitness_idx]
+                best_solution = self.population[max_fitness_idx].copy()
 
             # Seleccion de padres, crossover, y mutacion
             parents = self.select_parents(fitnesses, self.pop_size // 2)
