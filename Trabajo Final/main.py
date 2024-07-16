@@ -8,8 +8,11 @@ import  numpy as np
 def main():
     ...
     # test_adex()
-    # test_lif()
-    #test_hyh()
+    test_lif()
+
+
+    test_hyh()
+    
 
 if __name__ == '__main__':
     main()
