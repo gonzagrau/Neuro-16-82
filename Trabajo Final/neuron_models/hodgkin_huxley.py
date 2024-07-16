@@ -4,7 +4,7 @@ from typing import Callable, Tuple, List, Dict # para hacer type hinting
 from scipy.integrate import solve_ivp
 from scipy.signal import find_peaks
 from .base_model import NeuronModel
-from .utils import firing_rate, ruku4
+from .utils import firing_rate, ruku4, plot_voltage
 # Importamos las constantes de unidades
 from .utils import pV, pA, pS, Mohm
 from .utils import nV, nA, nS, ns
@@ -95,13 +95,15 @@ class HodgkinHuxley(NeuronModel):
                             i: Callable,
                             plot: bool = False,
                             t_units: float = 1,
-                            v_units: float = 1) -> Tuple[np.ndarray, List[int]]:
+                            v_units: float = 1,
+                            title: str | None = None) -> Tuple[np.ndarray, List[int]]:
         """
         :param np.ndarray t: time array of len N, defined as the range a:h:b
         :param np.ndarray i: current as a function of time
         :param plot: indicates whether to plot
         :param t_units: for plotting purposes
         :param v_units: for plotting purposes
+        :param title: for plotting purposes
 
         Uses the Runge-Kutta 4 method to solve the model
 
@@ -116,11 +118,7 @@ class HodgkinHuxley(NeuronModel):
         spike_times = list(find_peaks(V, height=0)[0])
 
         if plot:
-            fig, ax = plt.subplots()
-            ax.plot(t/t_units, V/v_units, 'k-', linewidth=0.5)
-            ax.set_xlabel('t [ms]')
-            ax.set_ylabel('V [mV]')
-            plt.show()
+            plot_voltage(t, V, t_units, v_units, title)
 
         return X, spike_times
 

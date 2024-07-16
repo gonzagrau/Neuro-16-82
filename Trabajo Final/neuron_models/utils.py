@@ -59,7 +59,7 @@ def ruku4(T: np.ndarray, F: Callable, X_0: np.ndarray, *args, **kwargs) -> np.nd
     return X
 
 
-def plot_voltage(t: np.ndarray, V: np.ndarray, t_units: float, v_units: float) -> None:
+def plot_voltage(t: np.ndarray, V: np.ndarray, t_units: float, v_units: float, title: str | None=None) -> None:
     """
     Plots voltage vs. time. Params are self explainatory
     """
@@ -67,4 +67,6 @@ def plot_voltage(t: np.ndarray, V: np.ndarray, t_units: float, v_units: float) -
     ax.plot(t / t_units, V / v_units, 'k-', linewidth=0.5)
     ax.set_xlabel('t [ms]')
     ax.set_ylabel('V [mV]')
+    if title is not None:
+        ax.set_title(title)
     plt.show()

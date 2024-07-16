@@ -50,7 +50,8 @@ class LIF_model(NeuronModel):
                             I_input: np.ndarray,
                             plot: bool = False,
                             t_units: float = ms,
-                            v_units: float = mV) -> Tuple[np.ndarray, np.ndarray]:
+                            v_units: float = mV,
+                            title: str | None=None) -> Tuple[np.ndarray, np.ndarray]:
         """
         Solves IVP to find the trajectory v(t)
         :param t: time samples
@@ -58,6 +59,7 @@ class LIF_model(NeuronModel):
         :param plot: indicates whether to plot
         :param t_units: for plotting purposes
         :param v_units: for plotting purposes
+        :param title: titulo del grafico, si lo hay
         :return: V, same shape as t, and a list of spike times
         """
         s = self
@@ -86,7 +88,7 @@ class LIF_model(NeuronModel):
                 V[i] = V_next
 
         if plot:
-            plot_voltage(t, V, t_units, v_units)
+            plot_voltage(t, V, t_units, v_units, title)
 
         return V, np.array(spike_times)
 

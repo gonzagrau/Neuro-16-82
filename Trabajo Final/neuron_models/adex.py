@@ -68,7 +68,8 @@ class Adex_model(NeuronModel):
                             I_input: np.ndarray,
                             plot: bool=False,
                             t_units: float=ms,
-                            v_units: float=mV) -> Tuple[np.ndarray, np.ndarray]:
+                            v_units: float=mV,
+                            title: str | None=None) -> Tuple[np.ndarray, np.ndarray]:
         """
         Resuelve numericamente un problema de valor inicial para el modelo LIF
 
@@ -78,6 +79,7 @@ class Adex_model(NeuronModel):
         I_units: defaultea a [pA]
         t_units: defaultea a [ms]
         v_units: defaultea a [mV]
+        title: titulo del grafico, si lo hay
 
         returns: X, tal que X[0, :] = V, y X[1, :] = w
                 spike_times: lista con los indices donde ocurre un disparo
@@ -110,7 +112,7 @@ class Adex_model(NeuronModel):
 
         if plot:
             V = X[0, :]
-            plot_voltage(t, V, t_units, v_units)
+            plot_voltage(t, V, t_units, v_units, title)
 
         return X, np.array(spike_times)
 
