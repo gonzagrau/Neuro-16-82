@@ -63,7 +63,7 @@ def plot_voltage(t: np.ndarray, V: np.ndarray, t_units: float, v_units: float, t
     """
     Plots voltage vs. time. Params are self explainatory
     """
-    fig, ax = plt.subplots(figsize = (22,6))
+    fig, ax = plt.subplots(figsize = (22, 6))
     ax.plot(t / t_units, V / v_units, 'k-', linewidth=0.5)
     ax.set_xlabel('t [ms]')
     ax.set_ylabel('V [mV]')
