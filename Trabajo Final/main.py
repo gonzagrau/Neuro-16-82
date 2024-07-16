@@ -9,7 +9,7 @@ def main():
     ...
     # test_adex()
     # test_lif()
-    test_hyh()
+    #test_hyh()
 
 if __name__ == '__main__':
     main()
